@@ -1,71 +1,118 @@
-''' Implementação de grafo com lista de adjacências '''
+from __future__ import annotations
 
-from typing import Collection, Optional
+from collections import deque
 
 
 class Node:
-    def __init__(self, vertex: int, next: Optional['Node']):
-        self.vertex = vertex
-        self.next = next
+    def __init__(self, vertex: int, next: Node | None = None):
+        self.__vertex = vertex
+        self.__next = next
+
+    @property
+    def vertex(self) -> int:
+        return self.__vertex
+
+    @property
+    def next(self) -> Node | None:
+        return self.__next
+
+    @next.setter
+    def next(self, node: Node | None):
+        self.__next = node
 
 
-class Graph:
-    def __init__(self, length: int, adjacency_list: list[Node | None]):
-        self.length = length
-        self.adjacency_list = adjacency_list
+class UndirectedGraph:
+    def __init__(self):
+        self.__adjancency_list: dict[int, Node] = {}
 
+    def add_edge(self, source_vertex: int, destination_vertex: int):
+        source_node = Node(source_vertex)
+        destination_node = Node(destination_vertex)
 
-def print_graph(graph: Graph):
-    for vertex, node in enumerate(graph.adjacency_list):
-        if not node:
-            continue
+        source_node.next = self.__adjancency_list.get(destination_vertex)
+        destination_node.next = self.__adjancency_list.get(source_vertex)
 
-        print(f'Lista de adjacências do vértice {vertex}')
+        self.__adjancency_list[source_vertex] = destination_node
+        self.__adjancency_list[destination_vertex] = source_node
 
-        next = node
+    def bfs(self, root: int):
+        visited_nodes = []
+        nodes_to_visit = deque([root])
 
-        while next:
-            print(f'-> {next.vertex}')
-            next = next.next
+        while nodes_to_visit:
+            node_to_visit = nodes_to_visit.popleft()
 
+            if node_to_visit in visited_nodes:
+                continue
 
-def create_node(vertex: int, next: Node | None = None) -> Node:
-    return Node(vertex, next)
+            visited_nodes.append(node_to_visit)
 
+            node = self.__adjancency_list[node_to_visit]
 
-def create_graph(vertices: int):
-    adjacency_list: list[Node | None] = [None for _ in range(vertices)]
+            while node:
+                nodes_to_visit.append(node.vertex)
+                node = node.next
 
-    return Graph(vertices, adjacency_list)
+        print(visited_nodes)
 
+    def dfs(self, root: int):
+        visited_nodes = []
 
-def add_edge(graph: Graph, source: int, destination: int):
-    destination_node = create_node(destination)
+        def search(target: int):
+            if target in visited_nodes:
+                return
 
-    destination_node.next = graph.adjacency_list[source]
+            visited_nodes.append(target)
 
-    graph.adjacency_list[source] = destination_node
+            current_node = self.__adjancency_list[target]
+
+            while current_node:
+                search(current_node.vertex)
+                current_node = current_node.next
+
+        search(root)
+
+        print(visited_nodes)
+
+    def __str__(self):
+        message = ''
+
+        for vertex, node in self.__adjancency_list.items():
+            if not node:
+                continue
+
+            message += f'{vertex} -> '
+
+            next = node
+
+            while next:
+                if not next:
+                    break
+
+                message += f'{next.vertex}, '
+                next = next.next
+
+            message = message.rstrip(', ')
+            message += '\n'
+
+        return message
 
 
 def main():
-    graph = create_graph(5)
+    graph = UndirectedGraph()
 
-    add_edge(graph, 0, 1)
-    add_edge(graph, 0, 4)
+    graph.add_edge(0, 1)
+    graph.add_edge(0, 4)
+    graph.add_edge(3, 2)
+    graph.add_edge(3, 1)
+    graph.add_edge(5, 4)
+    graph.add_edge(4, 2)
+    graph.add_edge(7, 0)
 
-    add_edge(graph, 1, 2)
-    add_edge(graph, 1, 3)
-    add_edge(graph, 1, 4)
+    print(graph)
 
-    add_edge(graph, 2, 3)
-
-    add_edge(graph, 3, 4)
-    add_edge(graph, 3, 1)
-
-    add_edge(graph, 4, 0)
-
-    print_graph(graph)
-    breakpoint()
+    graph.bfs(5)
+    graph.dfs(5)
 
 
 if __name__ == '__main__':
